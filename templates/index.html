@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.F.D. | Inteligencia Forense Digital</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;500;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo-area">
+            <div class="logo"><i class="fas fa-shield-check"></i> S.I.F.D.</div>
+            <div class="system-status">
+                <span class="status-pulse"></span>
+                <span class="status-text">RED NACIONAL ACTIVA - PERÚ</span>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="#" class="active"><i class="fas fa-microscope"></i> Escáner</a></li>
+            <li><a href="javascript:void(0)" onclick="toggleHistorial()"><i class="fas fa-history"></i> Mis
+                    Hallazgos</a></li>
+            <li class="dropdown">
+                <a href="javascript:void(0)"><i class="fas fa-question-circle"></i> Ayuda</a>
+                <div class="dropdown-content">
+                    <a href="#" onclick="abrirModal('acerca')">Acerca de</a>
+                    <a href="#" onclick="abrirModal('guia')">Guía de Uso</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="dashboard">
+        <header class="header animate__animated animate__fadeIn">
+            <h1><i class="fas fa-shield-virus"></i> S.I.F.D.</h1>
+            <p style="color: #94a3b8; font-weight: 300;">Sistema de Inteligencia Forense Digital v2.0</p>
+        </header>
+
+        <main class="scanner-card animate__animated animate__zoomIn">
+            <form method="POST">
+                <div class="input-group">
+                    <label><i class="fas fa-link"></i> Vector de Origen (URL)</label>
+                    <input type="text" name="url_input" value="{{ request.form.get('url_input', '') }}"
+                        placeholder="https://..." required>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-file-alt"></i> Contenido para Análisis</label>
+                    <div class="text-area-wrapper" style="position: relative;">
+                        <textarea name="texto_input" rows="5" placeholder="Pega el texto sospechoso aquí..."
+                            required>{{ request.form.get('texto_input', '') }}</textarea>
+
+                        <div class="ocr-button" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" id="file-input" style="display: none;" accept="image/*">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-analyze">
+                    <i class="fas fa-search-dollar"></i> INICIAR BÚSQUEDA DE EVIDENCIA
+                </button>
+            </form>
+
+            {% if resultado %}
+            <div class="result-panel animate__animated animate__fadeInUp">
+                <div
+                    class="status-header {% if 'PELIGRO' in resultado.estado %}status-peligro{% else %}status-seguro{% endif %}">
+                    <i
+                        class="fas {% if 'PELIGRO' in resultado.estado %}fa-biohazard{% else %}fa-check-circle{% endif %}"></i>
+                    DIAGNÓSTICO: {{ resultado.estado }}
+                </div>
+
+                <div class="analysis-body">
+                    <div class="mapa-calor">
+                        <h5 style="color: var(--accent-blue); font-size: 0.7rem; margin-bottom: 10px;">ANÁLISIS TEXTUAL
+                            COGNITIVO</h5>
+                        <p>{{ texto_marcado | safe }}</p>
+                    </div>
+
+                    <div class="evidence-section">
+                        <h4 style="color: var(--accent-green); font-size: 0.85rem; margin: 20px 0 15px 0;">
+                            <i class="fas fa-scroll"></i> EVIDENCIA OFICIAL ENCONTRADA:
+                        </h4>
+                        {% if fuentes_vivas %}
+                        {% for fuente in fuentes_vivas %}
+                        <div class="evidence-card">
+                            <span class="tag-gob">OFICIAL PERÚ</span>
+                            <a href="{{ fuente.url }}" target="_blank">{{ fuente.titulo }} <i
+                                    class="fas fa-external-link-alt"></i></a>
+                            <p>{{ fuente.snippet }}</p>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p style="color: var(--accent-red); font-size: 0.8rem; opacity: 0.8;">
+                            <i class="fas fa-exclamation-circle"></i> No se hallaron registros oficiales que respalden
+                            esta información.
+                            <strong>Extrema precauciones.</strong>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <div id="modal-info" class="modal">
+        <div class="modal-content tool-card">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <div id="contenido-modal"></div>
+        </div>
+    </div>
+
+    <script>
+        function abrirModal(tipo) {
+            const modal = document.getElementById('modal-info');
+            const contenido = document.getElementById('contenido-modal');
+            if (tipo === 'acerca') {
+                contenido.innerHTML = `<h3>Sobre S.I.F.D.</h3><p>Es una plataforma de inteligencia diseñada para proteger a los estudiantes peruanos de la desinformación masiva.</p>`;
+            } else {
+                contenido.innerHTML = `<h3>Guía de Uso</h3><p>1. Pega un texto o sube una captura.<br>2. Presiona "Búsqueda de Evidencia".<br>3. Revisa los links oficiales al final para contrastar.</p>`;
+            }
+            modal.style.display = "block";
+        }
+        function cerrarModal() { document.getElementById('modal-info').style.display = "none"; }
+
+        // Función para abrir/cerrar el panel lateral
+        function toggleHistorial() {
+            const panel = document.getElementById('panel-historial');
+            panel.classList.toggle('active');
+            renderizarHistorial();
+        }
+
+        // Función para guardar el hallazgo actual (llámala cuando recibas resultados)
+        function guardarHallazgo(tituloInvestigacion, fuentes) {
+            let historial = JSON.parse(localStorage.getItem('sifd_historial')) || [];
+
+            const nuevoHallazgo = {
+                id: Date.now(),
+                fecha: new Date().toLocaleDateString(),
+                titulo: tituloInvestigacion.substring(0, 40) + "...", // El mini subtítulo
+                fuentes: fuentes // Array de links encontrados
+            };
+
+            historial.unshift(nuevoHallazgo); // Pone el más reciente arriba
+            localStorage.setItem('sifd_historial', JSON.stringify(historial.slice(0, 10))); // Guarda los últimos 10
+        }
+
+        function renderizarHistorial() {
+            const lista = document.getElementById('lista-historial');
+            const historial = JSON.parse(localStorage.getItem('sifd_historial')) || [];
+
+            if (historial.length === 0) {
+                lista.innerHTML = '<p style="text-align:center; opacity:0.5;">Sin registros.</p>';
+                return;
+            }
+
+            lista.innerHTML = historial.map(item => `
+        <div class="historial-item">
+            <small>${item.fecha}</small>
+            <p><strong>Investigó:</strong> "${item.titulo}"</p>
+            <div class="historial-links">
+                ${item.fuentes.map(f => `<a href="${f.url}" target="_blank">Ver Fuente <i class="fas fa-external-link-alt"></i></a>`).join('')}
+            </div>
+        </div>
+    `).join('');
+        }
+
+        function limpiarHistorial() {
+            localStorage.removeItem('sifd_historial');
+            renderizarHistorial();
+        }
+    </script>
+    <div id="panel-historial" class="side-panel">
+        <div class="panel-header">
+            <h3><i class="fas fa-archive"></i> Historial de Evidencia</h3>
+            <span class="close-panel" onclick="toggleHistorial()">&times;</span>
+        </div>
+        <div id="lista-historial" class="panel-body">
+            <p style="font-size: 0.8rem; opacity: 0.5; text-align: center;">No hay investigaciones guardadas.</p>
+        </div>
+        <button onclick="limpiarHistorial()" class="btn-clear">Limpiar Historial</button>
+    </div>
+</body>
+
+</html>
