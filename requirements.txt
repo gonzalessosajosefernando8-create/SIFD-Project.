@@ -1,5 +1,6 @@
 Flask
-gunicorn
-spacy
+supabase
 textblob
 requests
+googlesearch-python
+gunicorn
