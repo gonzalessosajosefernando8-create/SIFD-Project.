@@ -1,0 +1,6 @@
+Flask
+supabase
+textblob
+requests
+googlesearch-python
+gunicorn
